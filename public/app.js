@@ -785,13 +785,14 @@ async function displayProblemList() {
                         }
 
                         displayProblemByIndex(problemIndex);
-                        progressData[problemIndex] = true;
-                        updateProblemColor(); 
-                        await saveProgress(progressData);
-                    } catch (error) {
-                        console.error(`❌ Lỗi khi lưu bài tập ${problemIndex}:`, error);
-                        alert("⚠ Có lỗi xảy ra khi lưu tiến trình! Vui lòng thử lại.");
-                    }
+                        //progressData[problemIndex] = true;
+			problemBox.style.backgroundColor = 'blue';
+                        //updateProblemColor(); 
+                         //await saveProgress(progressData);
+                    } //catch (error) {
+                       // console.error(`❌ Lỗi khi lưu bài tập ${problemIndex}:`, error);
+                       // alert("⚠ Có lỗi xảy ra khi lưu tiến trình! Vui lòng thử lại.");
+                    //}
                 });
 
                 problemContainer.appendChild(problemBox);
