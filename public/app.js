@@ -785,9 +785,8 @@ async function displayProblemList() {
                         }
 
                         displayProblemByIndex(problemIndex);
-                        //progressData[problemIndex] = true;
-			problemBox.style.backgroundColor = 'blue';
-                        //updateProblemColor(); 
+                        progressData[problemIndex] = true;
+		        updateProblemColor(); 
                          //await saveProgress(progressData);
                     } //catch (error) {
                        // console.error(`❌ Lỗi khi lưu bài tập ${problemIndex}:`, error);
