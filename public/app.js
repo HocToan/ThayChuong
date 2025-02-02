@@ -825,26 +825,22 @@ async function displayProblemList() {
                 problemBox.textContent = problemIndex;
                 problemBox.className = 'problem-box';
 
-        function updateProblemColor() {
-    		const problemBoxes = document.querySelectorAll('.problem-box');
-   	 	problemBoxes.forEach(box => {
-       		 const index = parseInt(box.textContent);
-        	if (progressData[index]) {
-            box.style.backgroundColor = 'green'; // ✅ Bài đã hoàn thành
-        } else if (index === currentProblemIndex) {
-            box.style.backgroundColor = 'blue'; // ✅ Bài đang làm
-        } else {
-            box.style.backgroundColor = 'yellow'; // ✅ Bài chưa làm
-        }
-   	 });
-	}
+                function updateProblemColor() {
+                    problemBox.style.backgroundColor = progressData[problemIndex] ? 'green' : 'yellow';
+                }
 
                 updateProblemColor(); // Cập nhật màu ngay khi hiển thị
 
-                problemBox.addEventListener("click", () => {
-                    // ✅ Chỉ đổi màu sang `blue`, không lưu tiến trình
+                problemBox.addEventListener("click", async () => {
+                    if (progressData[problemIndex]) {
+                        alert("📌 Bài tập này đã làm! Vui lòng chọn bài tập khác.");
+                        return;
+                    }
+
+                    // ✅ Nếu bài chưa làm, đổi màu sang `blue`
                     currentProblemIndex = problemIndex;
-                    updateProblemColor();
+                    problemBox.style.backgroundColor = 'blue';
+
                     displayProblemByIndex(problemIndex);
                 });
 
@@ -857,7 +853,6 @@ async function displayProblemList() {
         console.error('❌ Lỗi khi hiển thị danh sách bài tập:', error);
     }
 }
-
 
 // Khi trang tải xong, tự động tải tiến trình từ GitHub
 document.addEventListener("DOMContentLoaded", function () {
