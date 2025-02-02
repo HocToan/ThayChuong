@@ -426,11 +426,16 @@ async function saveProgress(progressData) {
             document.getElementById('result').innerHTML = feedback;
             MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
             await updateProgress(score); // Vẫn giữ logic cập nhật nội bộ nếu có
-	      displayProblemByIndex(problemIndex);
-                        progressData[problemIndex] = true;
-                        updateProblemColor(); 
-                        await saveProgress(progressData);
-
+	    if (currentProblem && currentProblem.index) {
+	    if (!progressData[currentStudentId]) {
+	        progressData[currentStudentId] = {}; // ✅ Đảm bảo tiến trình của học sinh tồn tại
+	    }
+	
+	    progressData[currentStudentId][currentProblem.index] = true; // ✅ Đánh dấu bài tập hoàn thành trước khi lưu
+		updateProblemColor(); 
+	    console.log(`✅ Bài tập ${currentProblem.index} đã hoàn thành và sẽ được lưu.`);
+	
+	    await saveProgress(progressData); // ✅ Lưu vào JSON trước khi cập nhật giao diện
 	    await displayProblemList(); // ✅ Cập nhật lại danh sách bài tập ngay sau khi lưu
 	}
     alert(`Bài tập đã được đánh dấu là hoàn thành!`);
