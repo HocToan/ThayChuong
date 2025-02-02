@@ -760,20 +760,18 @@ async function loadProgress(studentId) {
         });
 
         if (!response.ok) {
-            console.warn(`⚠ Không có dữ liệu tiến trình. Khởi tạo dữ liệu mới.`);
-            progressData = {}; // Nếu không có dữ liệu, đặt lại rỗng
+            console.warn(`⚠ Không có dữ liệu tiến trình cho học sinh ${studentId}. Khởi tạo dữ liệu mới.`);
+            progressData = {}; // ✅ Nếu không có dữ liệu, khởi tạo rỗng
             return;
         }
 
         const data = await response.json();
-        if (data && data.content) {
-            const allProgress = JSON.parse(atob(data.content));
-            progressData = allProgress[studentId] || {}; // ✅ Chỉ lấy tiến trình của học sinh hiện tại
-            console.log(`✅ Tiến trình của học sinh ${studentId} đã tải thành công:`, progressData);
-        } else {
-            console.warn(`⚠ Tiến trình rỗng cho học sinh ${studentId}.`);
-            progressData = {};
-        }
+        const allProgress = JSON.parse(atob(data.content));
+
+        // ✅ Chỉ lấy tiến trình của học sinh hiện tại
+        progressData = allProgress[studentId] || {};
+
+        console.log(`✅ Tiến trình của học sinh ${studentId} đã tải thành công:`, progressData);
 
         displayProblemList(); // Cập nhật danh sách bài tập theo tiến trình mới
     } catch (error) {
