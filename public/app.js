@@ -385,20 +385,40 @@ async function saveProgress(progressData) {
     }
 
     try {
-        console.log(`📤 [Client] Gửi dữ liệu tiến trình của học sinh ${currentStudentId} lên API...`);
+        console.log(`📤 [Client] Đang lưu tiến trình của học sinh ${currentStudentId} lên API...`);
 
-        const response = await fetch("/api/save-progress", {
+        // Lấy dữ liệu tiến trình hiện tại từ GitHub
+        const response = await fetch(GITHUB_SAVE_PROGRESS_URL, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' }
+        });
+
+        let allProgress = {};
+        if (response.ok) {
+            const data = await response.json();
+            allProgress = JSON.parse(atob(data.content));
+        }
+
+        // ✅ Cập nhật tiến trình của học sinh hiện tại mà không làm mất dữ liệu của học sinh khác
+        allProgress[currentStudentId] = progressData;
+
+        // ✅ Chuyển đổi thành base64 để lưu lên GitHub
+        const updatedContent = btoa(JSON.stringify(allProgress, null, 2));
+
+        const saveResponse = await fetch("/api/save-progress", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ progressData, studentId: currentStudentId }), // ✅ Gửi studentId lên API
+            body: JSON.stringify({
+                content: updatedContent,
+                studentId: currentStudentId
+            }),
         });
 
-        const result = await response.json();
+        const result = await saveResponse.json();
         console.log("📤 [Client] Response từ API:", result);
 
-        if (!response.ok) {
+        if (!saveResponse.ok) {
             throw new Error("❌ Lỗi khi lưu tiến trình vào GitHub.");
         }
 
