@@ -427,12 +427,17 @@ async function saveProgress(progressData) {
             MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
             await updateProgress(score); // Vẫn giữ logic cập nhật nội bộ nếu có
 	      // Nếu có bài tập đang làm, cập nhật tiến trình
-   if (currentProblem && currentProblem.index) {
-                progressData[currentProblem.index] = true;  // ✅ Đánh dấu bài tập đã hoàn thành
-                console.log(`✅ Cập nhật tiến trình: Bài tập ${currentProblem.index} đã hoàn thành.`);
-                await saveProgress(progressData);  // ✅ Lưu lên GitHub
-                await displayProblemList();  // ✅ Cập nhật giao diện
-            }
+	  if (currentProblem && currentProblem.index) {
+	    if (!progressData[currentStudentId]) {
+	        progressData[currentStudentId] = {}; // ✅ Đảm bảo tiến trình của học sinh tồn tại
+	    }
+	
+	    progressData[currentStudentId][currentProblem.index] = true; // ✅ Đánh dấu bài tập hoàn thành trước khi lưu
+	    console.log(`✅ Bài tập ${currentProblem.index} đã hoàn thành và sẽ được lưu.`);
+	
+	    await saveProgress(progressData); // ✅ Lưu vào JSON trước khi cập nhật giao diện
+	    await displayProblemList(); // ✅ Cập nhật lại danh sách bài tập ngay sau khi lưu
+	}
     alert(`Bài tập đã được đánh dấu là hoàn thành!`);
             // Thêm logic cập nhật điểm trung bình và số bài làm từ Google Sheets
             const sheetId = '165WblAAVsv_aUyDKjrdkMSeQ5zaLiUGNoW26ZFt5KWU'; // ID Google Sheet
