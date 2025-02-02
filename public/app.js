@@ -428,15 +428,16 @@ async function saveProgress(progressData) {
             await updateProgress(score); // Vẫn giữ logic cập nhật nội bộ nếu có
 	    if (currentProblem && currentProblem.index) {
 	    if (!progressData[currentStudentId]) {
-	        progressData[currentStudentId] = {}; // ✅ Đảm bảo tiến trình của học sinh tồn tại
+	        progressData[currentStudentId] = {}; // ✅ Đảm bảo dữ liệu tồn tại
 	    }
 	
-	    progressData[currentStudentId][currentProblem.index] = true; // ✅ Đánh dấu bài tập hoàn thành trước khi lưu
-		updateProblemColor(); 
-	    console.log(`✅ Bài tập ${currentProblem.index} đã hoàn thành và sẽ được lưu.`);
+	    progressData[currentStudentId][currentProblem.index] = true; // ✅ Đánh dấu bài tập đã hoàn thành
 	
-	    await saveProgress(progressData); // ✅ Lưu vào JSON trước khi cập nhật giao diện
-	    await displayProblemList(); // ✅ Cập nhật lại danh sách bài tập ngay sau khi lưu
+	    console.log(`✅ Cập nhật tiến trình: Bài tập ${currentProblem.index} đã hoàn thành.`);
+	    await saveProgress(progressData); // ✅ Lưu JSON trước khi cập nhật giao diện
+	
+	    updateProblemColor(currentProblem.index); // ✅ Cập nhật màu ngay lập tức
+	    await displayProblemList(); // ✅ Làm mới danh sách bài tập
 	}
     alert(`Bài tập đã được đánh dấu là hoàn thành!`);
             // Thêm logic cập nhật điểm trung bình và số bài làm từ Google Sheets
@@ -776,9 +777,20 @@ async function displayProblemList() {
                 problemBox.textContent = problemIndex;
                 problemBox.className = 'problem-box';
 
-                function updateProblemColor() {
-                    problemBox.style.backgroundColor = progressData[problemIndex] ? 'green' : 'yellow';
-                }
+                function updateProblemColor(problemIndex) {
+    const problemBox = document.querySelector(`.problem-box[data-index='${problemIndex}']`);
+    if (!problemBox) {
+        console.warn(`⚠ Không tìm thấy bài tập ${problemIndex} để cập nhật màu.`);
+        return;
+    }
+
+    if (progressData[currentStudentId] && progressData[currentStudentId][problemIndex]) {
+        problemBox.style.backgroundColor = 'green'; // ✅ Chuyển màu xanh lá khi hoàn thành
+    } else {
+        problemBox.style.backgroundColor = 'yellow'; // ✅ Giữ nguyên nếu chưa làm
+    }
+}
+
 
                 updateProblemColor(); // Cập nhật màu ngay khi hiển thị
 
