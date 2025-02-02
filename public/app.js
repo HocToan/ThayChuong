@@ -430,9 +430,7 @@ async function saveProgress(progressData) {
    if (currentProblem && currentProblem.index) {
                 progressData[currentProblem.index] = true;  // ✅ Đánh dấu bài tập đã hoàn thành
                 console.log(`✅ Cập nhật tiến trình: Bài tập ${currentProblem.index} đã hoàn thành.`);
-                progressData[problemIndex] = true;
-                updateProblemColor(); 
-	   	await saveProgress();  // ✅ Lưu lên GitHub
+                await saveProgress(progressData);  // ✅ Lưu lên GitHub
                 await displayProblemList();  // ✅ Cập nhật giao diện
             }
     alert(`Bài tập đã được đánh dấu là hoàn thành!`);
