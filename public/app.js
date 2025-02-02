@@ -430,7 +430,9 @@ async function saveProgress(progressData) {
    if (currentProblem && currentProblem.index) {
                 progressData[currentProblem.index] = true;  // ✅ Đánh dấu bài tập đã hoàn thành
                 console.log(`✅ Cập nhật tiến trình: Bài tập ${currentProblem.index} đã hoàn thành.`);
-                await saveProgress();  // ✅ Lưu lên GitHub
+                progressData[problemIndex] = true;
+                updateProblemColor(); 
+	   	await saveProgress();  // ✅ Lưu lên GitHub
                 await displayProblemList();  // ✅ Cập nhật giao diện
             }
     alert(`Bài tập đã được đánh dấu là hoàn thành!`);
@@ -783,10 +785,10 @@ async function displayProblemList() {
                             alert("📌 Bài tập này đã làm! Vui lòng chọn bài tập khác.");
                             return;
                         }
-
+			
                         displayProblemByIndex(problemIndex);
-                        progressData[problemIndex] = true;
-                        updateProblemColor(); 
+			problemBox.style.backgroundColor = 'blue';
+                        
                          // await saveProgress(progressData);
                     } catch (error) {
                         console.error(`❌ Lỗi khi lưu bài tập ${problemIndex}:`, error);
