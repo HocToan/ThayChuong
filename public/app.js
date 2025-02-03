@@ -375,28 +375,37 @@ async function saveProgress(progressData) {
         return;
     }
 
+    if (!progressData || typeof progressData !== "object") {
+        console.error("❌ Dữ liệu tiến trình không hợp lệ:", progressData);
+        return;
+    }
+
     try {
-        console.log(`📤 [Client] Gửi dữ liệu tiến trình của học sinh ${currentStudentId} lên API...`);
+        console.log(`📤 Gửi dữ liệu tiến trình lên GitHub...`);
+        console.log("📌 Dữ liệu JSON trước khi lưu:", JSON.stringify(progressData, null, 2));
 
         const response = await fetch("/api/save-progress", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ progressData, studentId: currentStudentId }), // ✅ Gửi studentId lên API
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ progressData, studentId: currentStudentId }),
         });
 
-        const result = await response.json();
-        console.log("📤 [Client] Response từ API:", result);
-
         if (!response.ok) {
-            throw new Error("❌ Lỗi khi lưu tiến trình vào GitHub.");
+            throw new Error(`❌ Lỗi khi lưu tiến trình: ${response.statusText}`);
         }
 
-        alert("✅ Tiến trình đã lưu thành công!");
+        const result = await response.json();
+        console.log("✅ Tiến trình đã lưu thành công:", result);
+
+        // Sau khi lưu, gọi lại loadProgress để đảm bảo dữ liệu mới được tải
+        await loadProgress(currentStudentId);
+        
+        // Cập nhật giao diện danh sách bài tập
+        await displayProblemList();
+
     } catch (error) {
-        console.error("❌ Lỗi khi ghi dữ liệu lên GitHub:", error);
-        alert("❌ Lỗi khi ghi dữ liệu lên GitHub! Kiểm tra console.");
+        console.error("❌ Lỗi khi lưu tiến trình:", error);
+        alert("❌ Lỗi khi lưu tiến trình! Kiểm tra console.");
     }
 }
 
