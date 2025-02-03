@@ -578,9 +578,6 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
         console.log("✅ [DEBUG] Dữ liệu đã gửi thành công đến Google Form.");
 
-        document.getElementById('result').innerHTML = feedback;
-        MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
-
         // ✅ Cập nhật tiến trình trước khi lưu
         if (!progressData[currentStudentId]) {
             progressData[currentStudentId] = {};
