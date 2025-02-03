@@ -92,20 +92,24 @@ function displayNextProblem() {
     }
 }
 function displayProblemByIndex(index) {
+    console.log(`📌 [DEBUG] Hiển thị bài tập ${index}`);
+
     if (problems.length === 0) {
-        document.getElementById('problemText').textContent = 'Danh sách bài tập chưa được tải. Vui lòng thử lại.';
+        alert('Danh sách bài tập chưa được tải. Vui lòng thử lại.');
         return;
     }
+
     const selectedProblem = problems.find(problem => parseInt(problem.index) === parseInt(index));
+
     if (selectedProblem) {
+        currentProblem = selectedProblem; // ✅ Gán bài tập hiện tại
         document.getElementById('problemText').innerHTML = formatProblemText(selectedProblem.problem);
-        MathJax.typesetPromise([document.getElementById('problemText')]).catch(function (err) {
-            console.error('MathJax rendering error:', err);
-        });
+        MathJax.typesetPromise([document.getElementById('problemText')]).catch(err => console.error('MathJax rendering error:', err));
     } else {
-        document.getElementById('problemText').textContent = `Không tìm thấy bài tập với số thứ tự ${index}.`;
+        alert(`❌ Không tìm thấy bài tập với số thứ tự ${index}.`);
     }
 }
+
         function formatProblemText(problemText) {
             return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
         }
