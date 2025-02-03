@@ -532,12 +532,8 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     console.log("📌 [DEBUG] Bắt đầu chấm bài...");
 
     // Kiểm tra nếu không có bài tập nào được chọn
-    if (!currentProblem) {
-        alert("❌ Không có bài tập nào đang được chọn. Vui lòng chọn một bài trước khi chấm!");
-        return;
-    }
-    if (!currentProblem.index) {
-        alert("❌ Bài tập không có chỉ số hợp lệ! Vui lòng thử lại.");
+    if (!currentProblem || !currentProblem.index) {
+        alert("❌ Không có bài tập hợp lệ! Vui lòng chọn bài trước khi chấm.");
         return;
     }
 
@@ -566,84 +562,80 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
         // Gửi ảnh để chấm bài
         const { studentAnswer, feedback, score } = await gradeWithGemini(imageToProcess, problemText, currentStudentId);
+
+        console.log(`📌 [DEBUG] Điểm số bài tập: ${score}`);
+
+        // 📤 Gửi dữ liệu lên Google Form
         const submitted = await submitToGoogleForm(score, currentStudentId, problemText, studentAnswer, feedback, studentName);
 
-        if (submitted) {
-            document.getElementById('result').innerHTML = feedback;
-            MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
-
-            // ✅ Cập nhật tiến trình trước khi lưu
-            if (!progressData[currentStudentId]) {
-                progressData[currentStudentId] = {};
-            }
-            progressData[currentStudentId][currentProblem.index] = true;
-
-            console.log("✅ Tiến trình sau khi cập nhật:", JSON.stringify(progressData));
-
-            // ✅ Cập nhật điểm số & số bài ngay lập tức
-            completedProblems++;
-            totalScore += score;
-            const averageScore = totalScore / completedProblems;
-
-            document.getElementById("completedExercises").textContent = completedProblems;
-            document.getElementById("averageScore").textContent = averageScore.toFixed(2);
-
-            console.log(`📌 [DEBUG] Số bài làm: ${completedProblems}, Điểm trung bình: ${averageScore.toFixed(2)}`);
-
-            // ✅ Lưu tiến trình trước khi cập nhật giao diện
-            await saveProgress(progressData);
-            await displayProblemList();
-
-            alert(`✅ Bài tập đã lưu thành công!`);
-
-            // ✅ Cập nhật lại từ Google Sheets để đồng bộ dữ liệu
-            setTimeout(async () => {
-                try {
-                    const sheetId = '165WblAAVsv_aUyDKjrdkMSeQ5zaLiUGNoW26ZFt5KWU'; // ID Google Sheet
-                    const sheetName = 'StudentProgress'; // Tên tab trong Google Sheet
-                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tqx=out:json`;
-
-                    const response = await fetch(sheetUrl);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const text = await response.text();
-                    const jsonDataMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/);
-                    if (!jsonDataMatch) {
-                        throw new Error('Không thể phân tích dữ liệu từ Google Sheets.');
-                    }
-
-                    const jsonData = JSON.parse(jsonDataMatch[1]);
-                    const rows = jsonData.table.rows;
-
-                    // Tìm thông tin theo mã học sinh
-                    const studentData = rows.find(row => {
-                        const sheetId = (row.c[0]?.v || '').toString().trim();
-                        return sheetId === currentStudentId;
-                    });
-
-                    if (!studentData) {
-                        console.error(`Không tìm thấy dữ liệu cho mã học sinh: ${currentStudentId}`);
-                        return;
-                    }
-
-                    // Cập nhật số bài và điểm trung bình từ Google Sheets
-                    const completedExercises = studentData.c[2]?.v || 0;
-                    const updatedAverageScore = studentData.c[3]?.v || 0;
-
-                    document.getElementById('completedExercises').textContent = completedExercises;
-                    document.getElementById('averageScore').textContent = updatedAverageScore;
-
-                    console.log(`✅ Dữ liệu cập nhật từ Google Sheets: Số bài làm: ${completedExercises}, Điểm trung bình: ${updatedAverageScore}`);
-                } catch (error) {
-                    console.error('❌ Lỗi khi tải dữ liệu từ Google Sheets:', error);
-                    alert(`Không thể tải tiến độ học tập. Chi tiết lỗi: ${error.message}`);
-                }
-            }, 3000); // Chờ 3 giây để Google Sheets cập nhật
-        } else {
-            throw new Error('❌ Không thể gửi dữ liệu đến Google Form.');
+        if (!submitted) {
+            throw new Error('❌ Gửi dữ liệu đến Google Form thất bại.');
         }
+
+        console.log("✅ [DEBUG] Dữ liệu đã gửi thành công đến Google Form.");
+
+        document.getElementById('result').innerHTML = feedback;
+        MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
+
+        // ✅ Cập nhật tiến trình trước khi lưu
+        if (!progressData[currentStudentId]) {
+            progressData[currentStudentId] = {};
+        }
+        progressData[currentStudentId][currentProblem.index] = true;
+
+        console.log("✅ [DEBUG] Tiến trình sau khi cập nhật:", JSON.stringify(progressData));
+
+        // ✅ Lưu tiến trình trước khi cập nhật giao diện
+        await saveProgress(progressData);
+        await displayProblemList();
+
+        alert(`✅ Bài tập đã lưu thành công!`);
+
+        // ✅ Cập nhật lại từ Google Sheets để đồng bộ dữ liệu
+        setTimeout(async () => {
+            try {
+                const sheetId = '165WblAAVsv_aUyDKjrdkMSeQ5zaLiUGNoW26ZFt5KWU'; // ID Google Sheet
+                const sheetName = 'StudentProgress'; // Tên tab trong Google Sheet
+                const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tqx=out:json`;
+
+                const response = await fetch(sheetUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const text = await response.text();
+                const jsonDataMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/);
+                if (!jsonDataMatch) {
+                    throw new Error('Không thể phân tích dữ liệu từ Google Sheets.');
+                }
+
+                const jsonData = JSON.parse(jsonDataMatch[1]);
+                const rows = jsonData.table.rows;
+
+                // Tìm thông tin theo mã học sinh
+                const studentData = rows.find(row => {
+                    const sheetId = (row.c[0]?.v || '').toString().trim();
+                    return sheetId === currentStudentId;
+                });
+
+                if (!studentData) {
+                    console.error(`Không tìm thấy dữ liệu cho mã học sinh: ${currentStudentId}`);
+                    return;
+                }
+
+                // 📊 Cập nhật số bài và điểm trung bình từ Google Sheets
+                const completedExercises = studentData.c[2]?.v || 0;
+                const updatedAverageScore = studentData.c[3]?.v || 0;
+
+                document.getElementById('completedExercises').textContent = completedExercises;
+                document.getElementById('averageScore').textContent = updatedAverageScore;
+
+                console.log(`✅ Dữ liệu cập nhật từ Google Sheets: Số bài làm: ${completedExercises}, Điểm trung bình: ${updatedAverageScore}`);
+            } catch (error) {
+                console.error('❌ Lỗi khi tải dữ liệu từ Google Sheets:', error);
+                alert(`Không thể tải tiến độ học tập. Chi tiết lỗi: ${error.message}`);
+            }
+        }, 3000); // Chờ 3 giây để Google Sheets cập nhật
     } catch (error) {
         console.error('❌ Lỗi:', error);
         document.getElementById('result').innerText = `Đã xảy ra lỗi: ${error.message}. Vui lòng thử lại sau.`;
