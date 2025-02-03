@@ -528,7 +528,7 @@ async function saveProgress(progressData) {
     }
 }
 
- document.getElementById('submitBtn').addEventListener('click', async () => {
+document.getElementById('submitBtn').addEventListener('click', async () => {
     console.log("📌 [DEBUG] Bắt đầu chấm bài...");
 
     // Kiểm tra nếu không có bài tập nào được chọn
@@ -649,6 +649,7 @@ async function saveProgress(progressData) {
         document.getElementById('result').innerText = `Đã xảy ra lỗi: ${error.message}. Vui lòng thử lại sau.`;
     }
 });
+
 
        document.getElementById('randomProblemBtn').addEventListener('click', () => {
             displayRandomProblem();
