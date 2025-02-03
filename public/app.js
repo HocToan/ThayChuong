@@ -526,46 +526,26 @@ async function saveProgress(progressData) {
 document.getElementById('selectProblemBtn').addEventListener('click', async () => {
     const problemIndexInput = document.getElementById('problemIndexInput').value.trim();
 
-    // Kiểm tra nếu người dùng chưa nhập số thứ tự
     if (!problemIndexInput) {
         alert('⚠ Vui lòng nhập số thứ tự bài cần chọn.');
         return;
     }
 
-    // Chuyển đổi thành số nguyên
     const problemIndex = parseInt(problemIndexInput, 10);
-
-    // Kiểm tra nếu bài tập tồn tại trong danh sách
     const selectedProblem = problems.find(problem => parseInt(problem.index) === problemIndex);
+
     if (!selectedProblem) {
         alert(`❌ Không tìm thấy bài tập với số thứ tự ${problemIndex}.`);
         return;
     }
 
-    // Kiểm tra nếu bài tập đã làm (màu xanh)
-    if (progressData[problemIndex]) {
-        alert("📌 Bài tập này đã làm! Vui lòng chọn bài tập khác.");
-        return;
-    }
+    // ✅ Gán bài tập hiện tại
+    currentProblem = selectedProblem;
 
-    // ✅ Nếu bài chưa làm, hiển thị bài tập
+    // ✅ Hiển thị bài tập trên giao diện
     document.getElementById('problemText').innerHTML = formatProblemText(selectedProblem.problem);
 
-    // ✅ Cập nhật trạng thái bài tập
-    progressData[problemIndex] = true;
-    updateProblemColor(problemIndex); // Cập nhật màu sắc trong danh sách
-
-    // ✅ Lưu tiến trình lên GitHub
-    console.log("📤 Đang lưu tiến trình lên GitHub...");
-    await saveProgress(progressData);
-    console.log("✅ Tiến trình đã lưu thành công!");
-
-    // ✅ Cập nhật hiển thị MathJax
-    MathJax.typesetPromise([document.getElementById('problemText')]).catch(err => {
-        console.error('MathJax rendering error:', err);
-    });
-
-    console.log(`✅ Bài tập ${problemIndex} đã được lưu vào tiến trình.`);
+    console.log(`📌 [DEBUG] Bài tập ${problemIndex} đã được chọn:`, currentProblem);
 });
 
 document.addEventListener('DOMContentLoaded', () => {
