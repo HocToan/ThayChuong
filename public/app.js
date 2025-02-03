@@ -372,7 +372,122 @@ async function generateSimilarProblem(originalProblem) {
             overlay.appendChild(messageBox);
             document.body.appendChild(overlay);
         }
-    // Hàm lưu tiến trình lên GitHub
+    // Hàm tải tiến trình từ GitHub
+async function loadProgress(studentId) {
+    try {
+        console.log(`📥 Đang tải tiến trình từ GitHub cho học sinh: ${studentId}...`);
+
+        const response = await fetch(GITHUB_SAVE_PROGRESS_URL, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' }
+        });
+
+        if (!response.ok) {
+            console.warn(`⚠ Không có dữ liệu tiến trình. Khởi tạo dữ liệu mới.`);
+            progressData = {}; // Nếu không có dữ liệu, đặt lại rỗng
+            return;
+        }
+
+        const data = await response.json();
+        if (data && data.content) {
+            const allProgress = JSON.parse(atob(data.content));
+            progressData = allProgress[studentId] || {}; // ✅ Chỉ lấy tiến trình của học sinh hiện tại
+            console.log(`✅ Tiến trình của học sinh ${studentId} đã tải thành công:`, progressData);
+        } else {
+            console.warn(`⚠ Tiến trình rỗng cho học sinh ${studentId}.`);
+            progressData = {};
+        }
+
+        displayProblemList(); // Cập nhật danh sách bài tập theo tiến trình mới
+    } catch (error) {
+        console.error("❌ Lỗi khi tải tiến trình:", error);
+        progressData = {};
+    }
+}
+
+// Hàm hiển thị danh sách bài tập từ Google Sheets
+async function displayProblemList() {
+    try {
+        console.log("📥 Đang tải danh sách bài tập từ Google Sheets...");
+
+        const response = await fetch(SHEET_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const text = await response.text();
+        const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/);
+
+        if (!match || match.length < 2) {
+            throw new Error("❌ Không thể phân tích dữ liệu từ Google Sheets.");
+        }
+
+        const jsonData = JSON.parse(match[1]);
+        const rows = jsonData.table.rows;
+
+        if (!rows || rows.length === 0) {
+            console.warn('⚠ Không có bài tập nào trong Google Sheets.');
+            return;
+        }
+
+        const problemContainer = document.getElementById('problemList');
+        if (!problemContainer) {
+            console.error("❌ Không tìm thấy phần tử 'problemList' trong DOM.");
+            return;
+        }
+
+        problemContainer.innerHTML = ''; // Xóa danh sách cũ
+
+        rows.forEach(row => {
+            const problemIndex = row.c[0]?.v; // Lấy số bài từ cột A của Google Sheets
+
+            if (problemIndex != null) {
+                if (!(problemIndex in progressData)) {
+                    progressData[problemIndex] = false; // Nếu chưa có trong JSON, đặt mặc định là false
+                }
+
+                const problemBox = document.createElement('div');
+                problemBox.textContent = problemIndex;
+                problemBox.className = 'problem-box';
+
+                function updateProblemColor() {
+                    problemBox.style.backgroundColor = progressData[problemIndex] ? 'green' : 'yellow';
+                }
+
+                updateProblemColor(); // Cập nhật màu ngay khi hiển thị
+
+                problemBox.addEventListener("click", async () => {
+                    try {
+                        if (progressData[problemIndex]) {
+                            alert("📌 Bài tập này đã làm! Vui lòng chọn bài tập khác.");
+                            return;
+                        }
+
+                        displayProblemByIndex(problemIndex);
+                        progressData[problemIndex] = true;
+                        updateProblemColor(); 
+                        // await saveProgress(progressData);
+                    } catch (error) {
+                        console.error(`❌ Lỗi khi lưu bài tập ${problemIndex}:`, error);
+                        alert("⚠ Có lỗi xảy ra khi lưu tiến trình! Vui lòng thử lại.");
+                    }
+                });
+
+                problemContainer.appendChild(problemBox);
+            }
+        });
+
+        console.log("✅ Danh sách bài tập đã cập nhật từ Google Sheets:", progressData);
+    } catch (error) {
+        console.error('❌ Lỗi khi hiển thị danh sách bài tập:', error);
+    }
+}
+// Khi trang tải xong, tự động tải tiến trình từ GitHub
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("📌 Trang đã tải xong, bắt đầu tải tiến trình từ GitHub...");
+    loadProgress();
+});
+
+// Hàm lưu tiến trình lên GitHub
 async function saveProgress(progressData) {
     if (!currentStudentId) {
         console.error("❌ Không có ID học sinh. Không thể lưu tiến trình.");
@@ -704,120 +819,6 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         console.error('❌ Lỗi khi tải dữ liệu:', error);
         alert(`❌ Không thể tải tiến độ học tập. Chi tiết lỗi: ${error.message}`);
     }
-});
-// Hàm tải tiến trình từ GitHub
-async function loadProgress(studentId) {
-    try {
-        console.log(`📥 Đang tải tiến trình từ GitHub cho học sinh: ${studentId}...`);
-
-        const response = await fetch(GITHUB_SAVE_PROGRESS_URL, {
-            headers: { 'Accept': 'application/vnd.github.v3+json' }
-        });
-
-        if (!response.ok) {
-            console.warn(`⚠ Không có dữ liệu tiến trình. Khởi tạo dữ liệu mới.`);
-            progressData = {}; // Nếu không có dữ liệu, đặt lại rỗng
-            return;
-        }
-
-        const data = await response.json();
-        if (data && data.content) {
-            const allProgress = JSON.parse(atob(data.content));
-            progressData = allProgress[studentId] || {}; // ✅ Chỉ lấy tiến trình của học sinh hiện tại
-            console.log(`✅ Tiến trình của học sinh ${studentId} đã tải thành công:`, progressData);
-        } else {
-            console.warn(`⚠ Tiến trình rỗng cho học sinh ${studentId}.`);
-            progressData = {};
-        }
-
-        displayProblemList(); // Cập nhật danh sách bài tập theo tiến trình mới
-    } catch (error) {
-        console.error("❌ Lỗi khi tải tiến trình:", error);
-        progressData = {};
-    }
-}
-
-// Hàm hiển thị danh sách bài tập từ Google Sheets
-async function displayProblemList() {
-    try {
-        console.log("📥 Đang tải danh sách bài tập từ Google Sheets...");
-
-        const response = await fetch(SHEET_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const text = await response.text();
-        const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/);
-
-        if (!match || match.length < 2) {
-            throw new Error("❌ Không thể phân tích dữ liệu từ Google Sheets.");
-        }
-
-        const jsonData = JSON.parse(match[1]);
-        const rows = jsonData.table.rows;
-
-        if (!rows || rows.length === 0) {
-            console.warn('⚠ Không có bài tập nào trong Google Sheets.');
-            return;
-        }
-
-        const problemContainer = document.getElementById('problemList');
-        if (!problemContainer) {
-            console.error("❌ Không tìm thấy phần tử 'problemList' trong DOM.");
-            return;
-        }
-
-        problemContainer.innerHTML = ''; // Xóa danh sách cũ
-
-        rows.forEach(row => {
-            const problemIndex = row.c[0]?.v; // Lấy số bài từ cột A của Google Sheets
-
-            if (problemIndex != null) {
-                if (!(problemIndex in progressData)) {
-                    progressData[problemIndex] = false; // Nếu chưa có trong JSON, đặt mặc định là false
-                }
-
-                const problemBox = document.createElement('div');
-                problemBox.textContent = problemIndex;
-                problemBox.className = 'problem-box';
-
-                function updateProblemColor() {
-                    problemBox.style.backgroundColor = progressData[problemIndex] ? 'green' : 'yellow';
-                }
-
-                updateProblemColor(); // Cập nhật màu ngay khi hiển thị
-
-                problemBox.addEventListener("click", async () => {
-                    try {
-                        if (progressData[problemIndex]) {
-                            alert("📌 Bài tập này đã làm! Vui lòng chọn bài tập khác.");
-                            return;
-                        }
-
-                        displayProblemByIndex(problemIndex);
-                        progressData[problemIndex] = true;
-                        updateProblemColor(); 
-                        // await saveProgress(progressData);
-                    } catch (error) {
-                        console.error(`❌ Lỗi khi lưu bài tập ${problemIndex}:`, error);
-                        alert("⚠ Có lỗi xảy ra khi lưu tiến trình! Vui lòng thử lại.");
-                    }
-                });
-
-                problemContainer.appendChild(problemBox);
-            }
-        });
-
-        console.log("✅ Danh sách bài tập đã cập nhật từ Google Sheets:", progressData);
-    } catch (error) {
-        console.error('❌ Lỗi khi hiển thị danh sách bài tập:', error);
-    }
-}
-// Khi trang tải xong, tự động tải tiến trình từ GitHub
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("📌 Trang đã tải xong, bắt đầu tải tiến trình từ GitHub...");
-    loadProgress();
 });
 
 });
