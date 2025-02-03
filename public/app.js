@@ -567,6 +567,10 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
         // 📤 Gửi dữ liệu lên Google Form
         const submitted = await submitToGoogleForm(score, currentStudentId, problemText, studentAnswer, feedback, studentName);
+	if (submitted) {
+            document.getElementById('result').innerHTML = feedback;
+            MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
+            await updateProgress(score); // Vẫn giữ logic cập nhật nội bộ nếu có
 
         if (!submitted) {
             throw new Error('❌ Gửi dữ liệu đến Google Form thất bại.');
