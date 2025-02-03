@@ -527,7 +527,6 @@ async function saveProgress(progressData) {
         alert("❌ Lỗi khi lưu tiến trình! Kiểm tra console.");
     }
 }
-
 document.getElementById('submitBtn').addEventListener('click', async () => {
     console.log("📌 [DEBUG] Bắt đầu chấm bài...");
 
@@ -567,16 +566,18 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
         // 📤 Gửi dữ liệu lên Google Form
         const submitted = await submitToGoogleForm(score, currentStudentId, problemText, studentAnswer, feedback, studentName);
-	if (submitted) {
-            document.getElementById('result').innerHTML = feedback;
-            MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
-            await updateProgress(score); // Vẫn giữ logic cập nhật nội bộ nếu có
 
         if (!submitted) {
             throw new Error('❌ Gửi dữ liệu đến Google Form thất bại.');
         }
 
         console.log("✅ [DEBUG] Dữ liệu đã gửi thành công đến Google Form.");
+
+        document.getElementById('result').innerHTML = feedback;
+        MathJax.typesetPromise([document.getElementById('result')]).catch(err => console.error('MathJax rendering error:', err));
+
+        // ✅ Cập nhật điểm trung bình và số bài đã làm
+        await updateProgress(score);
 
         // ✅ Cập nhật tiến trình trước khi lưu
         if (!progressData[currentStudentId]) {
